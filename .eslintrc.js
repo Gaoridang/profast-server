@@ -18,6 +18,7 @@ module.exports = {
     },
   ],
   parserOptions: {
+    project: './tsconfig.json',
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
@@ -25,5 +26,22 @@ module.exports = {
     semi: ['error', 'always'],
     'no-console': 'off',
     'no-multiple-empty-lines': 'error',
+    '@typescript-eslint/no-misused-promises': 'off',
+    'import/extensions': [
+      'error',
+      'ignorePackages',
+      {
+        ts: 'never',
+        tsx: 'never',
+      },
+    ],
+  },
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      },
+      typescript: {},
+    },
   },
 };
