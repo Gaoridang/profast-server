@@ -1,9 +1,11 @@
 import type { Request, Response } from 'express';
 import bycript from 'bcrypt';
-import type { SignFormValues } from '../libs/schemas/signFormSchema';
-import { buildOAuthUrl } from '../libs/oauth-utils';
+import axios from 'axios';
 
-const signUp = async (req: Request<SignFormValues>, res: Response): Promise<void> => {
+import type { SignFormValues } from '../libs/schemas/signFormSchema';
+import getEnv from '../../config';
+
+export const signUp = async (req: Request<SignFormValues>, res: Response): Promise<void> => {
   try {
     const { password } = req.body;
 
@@ -18,18 +20,40 @@ const signUp = async (req: Request<SignFormValues>, res: Response): Promise<void
   }
 };
 
-const googleSignIn = async (req: Request, res: Response): Promise<void> => {
+export const googleSignIn = async (req: Request, res: Response): Promise<void> => {
   try {
-    const url = buildOAuthUrl('GOOGLE_SIGNIN_REDIRECT_URI');
+    let url = 'https://accounts.google.com/o/oauth2/v2/auth';
+    url += `?client_id=${getEnv('GOOGLE_CLIENT_ID')}`;
+    url += `&redirect_uri=${encodeURIComponent(getEnv('GOOGLE_REDIRECT_URI'))}`;
+    url += '&response_type=code';
+    url += '&scope=openid%20email%20profile';
     res.redirect(url);
   } catch (error) {}
 };
 
-const googleSignUp = async (req: Request, res: Response): Promise<void> => {
+export const googleSignInRedirect = async (req: Request, res: Response): Promise<void> => {
+  const { code } = req.query;
+  console.log('code: ', code);
   try {
-    const url = buildOAuthUrl('GOOGLE_SIGNUP_REDIRECT_URI');
-    res.redirect(url);
-  } catch (error) {}
-};
+    if (typeof code !== 'string') throw new Error('code is not string');
+    const tokenRes = await axios.post('https://oauth2.googleapis.com/token', {
+      code,
+      client_id: `${getEnv('GOOGLE_CLIENT_ID')}`,
+      client_secret: `${getEnv('GOOGLE_CLIENT_SECRET')}`,
+      redirect_uri: `${getEnv('GOOGLE_REDIRECT_URI')}`,
+      grant_type: 'authorization_code',
+    });
 
-export { signUp, googleSignIn, googleSignUp };
+    const userRes = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        Authorization: `Bearer ${tokenRes.data.access_token}`,
+      },
+    });
+
+    console.log('response: ', userRes.data);
+    res.redirect('http://localhost:5174');
+  } catch (error) {
+    console.error('Server Error: ', error);
+    res.status(500).send({ message: 'Error signing in user.' });
+  }
+};
