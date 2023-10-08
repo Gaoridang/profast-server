@@ -4,7 +4,7 @@ export const SignFormSchema = z
   .object({
     name: z
       .string()
-      .min(5, '이름은 5자 이상이어야 합니다.')
+      .min(10, '이름은 10자 이상이어야 합니다.')
       .max(20, '이름은 20자 이하여야 합니다.'),
     email: z.string().email(),
     password: z
