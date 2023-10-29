@@ -78,6 +78,8 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.post('/api/auth/refresh', async (req, res) => {});
+
 server.listen(5002, () => {
   console.log('Authentication server listening on port 5002');
 });
