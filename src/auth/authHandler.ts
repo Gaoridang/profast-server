@@ -1,6 +1,6 @@
+import bcrypt from 'bcrypt';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
 import type { RowDataPacket } from 'mysql2';
 import getDbConnection from '../../db';
 import { SignFormSchema } from '../libs/schemas';
@@ -13,6 +13,11 @@ import {
   insertTokenQuery,
   revokeTokenQuery,
 } from './auth.queries';
+import {
+  ACCESS_TOKEN_EXPIRATION_TIME,
+  BCRYPT_SALT_ROUNDS,
+  REFRESH_TOKEN_EXPIRATION_TIME,
+} from './constants';
 
 export const registerUser = async (
   req: Request,
@@ -33,7 +38,7 @@ export const registerUser = async (
       throw new Error('이미 가입된 이메일입니다.');
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = bcrypt.hashSync(password, BCRYPT_SALT_ROUNDS);
     await db.execute(createUserQuery, [name, email, hashedPassword]);
 
     res.status(201).send({ message: 'User created successfully' });
@@ -64,10 +69,13 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
       email: user.email,
     };
 
-    const secretKey = process.env.JWT_SECRET_KEY ?? 'secret';
-    const accessToken = jwt.sign(payload, secretKey, { expiresIn: '1h' });
+    const secretKey = process.env.JWT_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('JWT_SECRET_KEY를 찾을 수 없습니다.');
+    }
+    const accessToken = jwt.sign(payload, secretKey, { expiresIn: ACCESS_TOKEN_EXPIRATION_TIME });
     const refreshToken = jwt.sign(payload, secretKey);
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRATION_TIME);
 
     await db.execute(insertTokenQuery, [user.id, refreshToken, 'refresh', expiresAt]);
 
@@ -90,15 +98,18 @@ export const refreshUserToken = async (
     }
 
     const db = getDbConnection();
-    const secretKey = process.env.JWT_SECRET_KEY ?? 'secret';
+    const secretKey = process.env.JWT_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('JWT_SECRET_KEY를 찾을 수 없습니다.');
+    }
 
     try {
       jwt.verify(refreshToken, secretKey);
     } catch (error) {
-      res.status(401).send({ error: '유효하지 않은 갱신 토큰입니다.' });
+      throw new Error('유효하지 않은 갱신 토큰입니다.');
     }
 
-    // Check if refresh token is expired
+    // 리프레시 토큰 검증
     const [existingToken] = (await db.execute(checkTokenQuery, [refreshToken])) as RowDataPacket[];
 
     if (!existingToken.length) {
@@ -122,9 +133,11 @@ export const refreshUserToken = async (
       email: userInfo.email,
     };
 
-    const newAccessToken = jwt.sign(payload, secretKey, { expiresIn: '1h' });
+    const newAccessToken = jwt.sign(payload, secretKey, {
+      expiresIn: ACCESS_TOKEN_EXPIRATION_TIME,
+    });
     const newRefreshToken = jwt.sign(payload, secretKey);
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRATION_TIME);
 
     await db.execute(insertTokenQuery, [userInfo.id, newRefreshToken, 'refresh', expiresAt]);
 
@@ -142,8 +155,7 @@ export const logoutUser = async (
   const authHeader = req.headers.authorization;
   const db = getDbConnection();
   const refreshToken = authHeader && authHeader.split(' ')[1];
-  const revokedTokenQuery = 'UPDATE token SET revoked = 1 WHERE token = ?';
-  await db.execute(revokedTokenQuery, [refreshToken]);
+  await db.execute(revokeTokenQuery, [refreshToken]);
 
   res.send({ message: '성공적으로 로그아웃 되었습니다.' });
 };
