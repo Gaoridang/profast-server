@@ -27,6 +27,8 @@ module.exports = {
     'no-console': 'off',
     'no-multiple-empty-lines': 'error',
     '@typescript-eslint/no-misused-promises': 'off',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/strict-boolean-expressions': 'off',
     'import/extensions': [
       'error',
       'ignorePackages',
