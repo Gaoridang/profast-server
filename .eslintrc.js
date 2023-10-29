@@ -29,6 +29,7 @@ module.exports = {
     '@typescript-eslint/no-misused-promises': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/strict-boolean-expressions': 'off',
+    '@typescript-eslint/prefer-optional-chain': 'off',
     'import/extensions': [
       'error',
       'ignorePackages',
