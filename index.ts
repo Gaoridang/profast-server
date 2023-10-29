@@ -5,7 +5,9 @@ import cors from 'cors';
 
 import authRouter from './src/routes/authRoutes';
 
-dotenv.config();
+dotenv.config({
+  path: process.env.NODE_ENV === 'production' ? '.env.prod' : '.env.local',
+});
 
 const app: Express = express();
 const port = process.env.PORT ?? 5001;
