@@ -18,7 +18,7 @@ import {
   BCRYPT_SALT_ROUNDS,
   REFRESH_TOKEN_EXPIRATION_TIME,
 } from './constants';
-
+// DONE: JWT 토큰을 이용한 로그인, 로그아웃, 회원가입, 토큰 갱신 기능 구현
 export const registerUser = async (
   req: Request,
   res: Response,
