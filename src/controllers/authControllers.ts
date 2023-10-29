@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import bycript from 'bcrypt';
+import bcrypt from 'bcrypt';
 import axios from 'axios';
 
 import type { SignFormValues } from '../libs/schemas/signFormSchema';
@@ -10,7 +10,7 @@ export const signUp = async (req: Request<SignFormValues>, res: Response): Promi
     const { password } = req.body;
 
     // TODO: Implement sign up logic, upload to mongoDB
-    const hashedPassword = await bycript.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     console.log('hashedPassword: ', hashedPassword);
 
     res.status(200).send({ message: 'User signed up successfully!' });
@@ -51,6 +51,7 @@ export const googleSignInRedirect = async (req: Request, res: Response): Promise
     });
 
     console.log('response: ', userRes.data);
+    // 홈페이지로 리다이렉트
     res.redirect('http://localhost:5174');
   } catch (error) {
     console.error('Server Error: ', error);
