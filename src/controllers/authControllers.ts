@@ -15,7 +15,7 @@ const signUp = async (req: Request, res: Response): Promise<void> => {
 
       res.status(200).send({ message: 'User signed up successfully!', newUser });
     } else {
-      res.status(400).send({ message: 'Incorrect values' });
+      res.status(400).send({ message: validation.error.message });
     }
   } catch (error) {
     console.error('Server Error: ', error);
