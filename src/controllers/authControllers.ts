@@ -1,16 +1,22 @@
 import type { Request, Response } from 'express';
-import bycript from 'bcrypt';
-import type { SignFormValues } from '../libs/schema';
+import bcrypt from 'bcrypt';
+import { SignFormSchema, type SignFormValues } from '../libs/schema';
 
-const signUp = async (req: Request<SignFormValues>, res: Response): Promise<void> => {
+const signUp = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { password } = req.body;
+    const validation = SignFormSchema.safeParse(req.body);
+    if (validation.success) {
+      const { name, email, password } = validation.data;
 
-    // TODO: Implement sign up logic, upload to mongoDB
-    const hashedPassword = await bycript.hash(password, 10);
-    console.log('hashedPassword: ', hashedPassword);
+      // TODO: Implement sign up logic, upload to mongoDB
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = { name, email, password: hashedPassword };
+      console.log('hashedPassword: ', hashedPassword);
 
-    res.status(200).send({ message: 'User signed up successfully!' });
+      res.status(200).send({ message: 'User signed up successfully!', newUser });
+    } else {
+      res.status(400).send({ message: 'Incorrect values' });
+    }
   } catch (error) {
     console.error('Server Error: ', error);
     res.status(500).send({ message: 'Error signing up user.' });
