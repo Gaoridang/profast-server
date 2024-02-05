@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { SignFormSchema, type SignFormValues } from '../libs/schema';
+import { SignFormSchema } from '../libs/schema';
 
 const signUp = async (req: Request, res: Response): Promise<void> => {
   try {

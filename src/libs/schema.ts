@@ -21,4 +21,9 @@ export const SignFormSchema = z
     path: ['confirmPassword'],
   });
 
+export const pdfDataSchema = z.object({
+  htmlContent: z.string().min(1),
+});
+
 export type SignFormValues = z.infer<typeof SignFormSchema>;
+export type CrwaledData = z.infer<typeof pdfDataSchema>;
